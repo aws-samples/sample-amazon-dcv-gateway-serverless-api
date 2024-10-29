@@ -1,104 +1,66 @@
+import json
 import os
+import secrets
+import base64
+
 import boto3
 import time
-from urllib import parse
+import uuid
 from botocore.exceptions import ClientError
 
 ec2 = boto3.client("ec2")
+dynamodb = boto3.client("dynamodb")
+kms = boto3.client("kms")
 
-TABLE_NAME = os.environ.get('DCV_TABLE_NAME')
-KMS_KEY = os.environ.get('DCV_KMS_KEY')
-
-class InstanceDetails:
-    enabled: bool
-    user: str
-    private_ip_addr: str
+TABLE_NAME = os.environ.get("DCV_TABLE_NAME")
+KMS_KEY = os.environ.get("DCV_KMS_KEY")
 
 
-def get_instance_details(instance_id):
-    """Given an instance ID this returns the private Ip address and DCV tags corresponding to it"""
-    try:
-        response = ec2.describe_instances(InstanceIds=[instance_id])
-        private_ip_addr = response["Reservations"][0]["Instances"][0][
-            "PrivateIpAddress"
-        ]
-        platform = response["Reservations"][0]["Instances"][0]["PlatformDetails"]
-
-        tags = response["Reservations"][0]["Instances"][0]["Tags"]
-        dcv_enabled = next(
-            (tag for tag in tags if tag["Key"] == "dcv:type" and tag["Value"] == "server"), None
-        )
-
-        # Tags.of(self.asg).add("dcv:type", "server")
-        # Tags.of(self.asg).add("dcv:platform", "windows")
-        # Tags.of(self.asg).add("dcv:user", "Administrator")
-        # Tags.of(self.asg).add("dcv:session:autogenerate", "true")
-
-
-
-        return private_ip_addr
-    except ClientError:
-        return {"statusCode": 404, "body": f"Invalid session ID '{instance_id}'."}
+def get_instance_tags(instance_id):
+    response = ec2.describe_instances(InstanceIds=[instance_id])
+    tags = response["Reservations"][0]["Instances"][0]["Tags"]
+    return dict((tag["Key"], tag["Value"]) for tag in tags)
 
 
 def handler(event, context):
-    instance_id = event.get("detail", {}).get("EC2InstanceId")
+    if not "instanceId" in event["queryStringParameters"]:
+        return {
+            "statusCode": 400,
+            "body": json.dumps({"error": "Parameter instanceId is required"}),
+        }
 
-    if instance_id:
-
-
+    instance_id = event["queryStringParameters"]["instanceId"]
     try:
+        tags = get_instance_tags(instance_id)
+    except ClientError:
+        return {"statusCode": 404, "body": json.dumps({"error": "Invalid instanceId"})}
 
-        params = dict(parse.parse_qsl(event["body"], strict_parsing=True))
-
-        authToken = params.get("authenticationToken")
-        sessionId = params.get("sessionId")
-
-        if authToken == None or sessionId == None:
-            return {
-                "statusCode": 200,
-                "body": '<auth result="no"><message>Invalid format</message></auth>',
-            }
-
-        username = authToken
+    if tags.get("dcv:type") != "server" or not tags.get("dcv:user"):
         return {
-            "statusCode": 200,
-            "body": '<auth result="yes"><username>' + username + "</username></auth>",
+            "statusCode": 400,
+            "body": json.dumps({"error": "Instance has no required tags"}),
         }
 
-        dynamodb = boto3.client("dynamodb")
-        scan = dynamodb.scan(
-            TableName=TABLE_NAME,
-            FilterExpression="AuthToken = :AuthToken AND SessionId = :SessionId",
-            ExpressionAttributeValues={
-                ":AuthToken": {"S": authToken},
-                ":SessionId": {"S": sessionId},
-            },
-        )
+    session_id = str(uuid.uuid4())
+    secret = str(secrets.token_urlsafe(64))
 
-        count = scan["Count"]
-        if count:
-            expirationTime = int(scan["Items"][0]["ExpirationTime"]["N"])
-            if expirationTime < int(time.time()):
-                return {
-                    "statusCode": 200,
-                    "body": '<auth result="no"><message>Token expired</message></auth>',
-                }
+    auth_token_bytes = kms.encrypt(
+        KeyId=KMS_KEY, Plaintext=json.dumps({"session_id": session_id, "secret": secret})
+    )["CiphertextBlob"]
+    auth_token=base64.urlsafe_b64encode(auth_token_bytes)
 
-            username = scan["Items"][0]["UserName"]["S"]
-            return {
-                "statusCode": 200,
-                "body": '<auth result="yes"><username>'
-                + username
-                + "</username></auth>",
-            }
-        else:
-            return {
-                "statusCode": 200,
-                "body": '<auth result="no"><message>Authentication token not found</message></auth>',
-            }
-    except:
-        return {
-            "statusCode": 200,
-            "body": '<auth result="no"><message>Generic error</message></auth>',
-        }
+    dynamodb.put_item(
+        TableName=TABLE_NAME,
+        Item={
+            "session_id": {"S": session_id},
+            "secret": {"S": secret},
+            "instance_id": {"S": instance_id},
+            "username": {"S": tags.get("dcv:user")},
+            "expire_at": {"N": str(int(time.time()) + 3600)},  # token is valid 1h
+        },
+    )
+
+    return {
+        "statusCode": 200,
+        "body": json.dumps({"authToken": auth_token.decode(), "sessionId": session_id}),
+    }

@@ -1,11 +1,10 @@
 from aws_cdk import (
-    Stack,
+    NestedStack,
     aws_ec2 as ec2,
 )
 from constructs import Construct
 
-
-class NetworkStack(Stack):
+class NetworkStack(NestedStack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
@@ -47,5 +46,7 @@ class NetworkStack(Stack):
             ec2.InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
             ec2.InterfaceVpcEndpointAwsService.APIGATEWAY,
         ]:
-            endpoint = self.vpc.add_interface_endpoint(service.short_name, service=service)
+            endpoint = self.vpc.add_interface_endpoint(
+                service.short_name, service=service
+            )
             self.interface_endpoints[service.short_name] = endpoint

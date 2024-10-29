@@ -1,6 +1,7 @@
 <powershell>
-New-ItemProperty -Path "Microsoft.PowerShell.Core\Registry::\HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\security"     -Name auth-token-verifier  -PropertyType String -Value "{{AuthenticatorUrl}}" -Force
+New-ItemProperty -Path "Microsoft.PowerShell.Core\Registry::\HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\security"     -Name auth-token-verifier  -PropertyType String -Value "$AUTHENTICATOR_URL" -Force
 New-ItemProperty -Path "Microsoft.PowerShell.Core\Registry::\HKEY_USERS\S-1-5-18\Software\GSettings\com\nicesoftware\dcv\connectivity" -Name enable-quic-frontend -PropertyType DWord -Value "1" -Force
+
 net stop dcvserver
 net start dcvserver
 </powershell>
