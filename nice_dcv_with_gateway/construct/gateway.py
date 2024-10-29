@@ -5,7 +5,7 @@ from aws_cdk import (
     aws_elasticloadbalancingv2 as elbv2,
     aws_iam as iam,
     aws_autoscaling as autoscaling,
-    Duration, Tags,
+    Duration, Tags, CfnOutput,
 )
 from constructs import Construct
 
@@ -50,6 +50,7 @@ class Gateway(Resource):
             security_groups=[self.nlb_security_group],
             vpc_subnets=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PUBLIC),
         )
+        CfnOutput(self, "NLBDNSName", value=self.nlb.load_balancer_dns_name)
 
         self.nlb_target_group = elbv2.NetworkTargetGroup(
             self,

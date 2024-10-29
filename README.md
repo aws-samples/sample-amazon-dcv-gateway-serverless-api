@@ -12,7 +12,7 @@
 
 ```
 2. Run `cdk deploy` to deploy the stack
-3. Open EC2 console and copy instanceId of either windows or linux instance (check how instances are tagged) 
+3. Open EC2 console and copy instanceId of either windows or linux instance (check how instances are tagged with `dcv:` prefix) 
 4. Open API gateway console, select `DcvAccessManagementApi`
 5. Test `POST session` endpoint with following query string `instanceId={instanceId}`. It does create session valid for 1h. 
 6. Copy NLB DNS and craft url like this `https://{DNS}:8443?authToken={token}#{sessionId}`
