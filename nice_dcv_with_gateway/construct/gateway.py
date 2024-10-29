@@ -5,7 +5,7 @@ from aws_cdk import (
     aws_elasticloadbalancingv2 as elbv2,
     aws_iam as iam,
     aws_autoscaling as autoscaling,
-    Duration,
+    Duration, Tags,
 )
 from constructs import Construct
 
@@ -129,6 +129,7 @@ class Gateway(Resource):
             launch_template=self.launch_template,
             health_check=autoscaling.HealthCheck.ec2(grace=Duration.minutes(1)),
         )
+        Tags.of(self.asg).add("dcv:type", "gateway")
 
         self.asg.attach_to_network_target_group(self.nlb_target_group)
 
