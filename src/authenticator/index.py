@@ -6,6 +6,9 @@ import base64
 from urllib import parse
 
 from botocore.exceptions import ClientError
+from typing import Optional
+from pydantic import BaseModel, Field
+from xmltodict import unparse
 
 ec2 = boto3.client("ec2")
 dynamodb = boto3.client("dynamodb")
@@ -14,15 +17,38 @@ kms = boto3.client("kms")
 TABLE_NAME = os.environ.get("DCV_TABLE_NAME")
 KMS_KEY = os.environ.get("DCV_KMS_KEY")
 
+class Auth(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    result: Optional[str] = Field(None, alias="_result", title="Result")
+    username: Optional[str] = Field(None, title="Username")
+    message: Optional[str] = Field(None, title="Error message")
+
+class AuthenticateResponse(BaseModel):
+    class Config:
+        allow_population_by_field_name = True
+
+    auth: Auth
+
+    def __str__(self):
+        return unparse(self.model_dump(by_alias=True), attr_prefix="_")
+
+def get_instance_ip(instance_id):
+    response = ec2.describe_instances(InstanceIds=[instance_id])
+    private_ip_addr = response["Reservations"][0]["Instances"][0]["PrivateIpAddress"]
+    return private_ip_addr
+
 def handler(event, context):
     params = dict(parse.parse_qsl(event["body"], strict_parsing=True))
 
     authToken = params.get("authenticationToken")
+    source_ip = event.get("requestContext").get("identity").get("sourceIp")
 
     if authToken == None:
         return {
             "statusCode": 200,
-            "body": '<auth result="no"><message>Invalid format</message></auth>',
+            "body": AuthenticateResponse(auth=Auth(result=False,message='Invalid format')),
         }
 
     try:
@@ -32,7 +58,7 @@ def handler(event, context):
     except ClientError as e:
         return {
             "statusCode": 200,
-            "body": '<auth result="no"><message>Invalid token format</message></auth>',
+            "body": AuthenticateResponse(auth=Auth(result=False,message='Invalid token format')),
         }
 
     session_id = token_payload["session_id"]
@@ -44,23 +70,40 @@ def handler(event, context):
         if not "Item" in item:
             return {
                 "statusCode": 404,
-                "body": json.dumps({"error": "Unknown sessionId"}),
+                "body": AuthenticateResponse(auth=Auth(result=False,message='Session not found')),
             }
 
         expire_at = int(item["Item"]["expire_at"]["N"])
         if expire_at < int(time.time()):
-            return {"statusCode": 400, "body": json.dumps({"error": "Expired session"})}
+            return {"statusCode": 400, "body": AuthenticateResponse(auth=Auth(result=False,message='Expired session')),}
+
+        activated_at = int(item["Item"]["activated_at"]["N"])
+        if activated_at > 0:
+            return {"statusCode": 400, "body": AuthenticateResponse(auth=Auth(result=False,message='Session already activated')),}
+
+        if source_ip != get_instance_ip(item["Item"]["instance_id"]["S"]):
+            return {"statusCode": 404, "body": AuthenticateResponse(auth=Auth(result=False,message='Unknown origin'))}
 
         if secret != item["Item"]["secret"]["S"]:
-            return {"statusCode": 400, "body": json.dumps({"error": "Invalid secret"})}
+            return {"statusCode": 400, "body": AuthenticateResponse(auth=Auth(result=False,message='Invalid secret'))}
 
         username = item["Item"]["username"]["S"]
+
+        dynamodb.update_item(
+            TableName=TABLE_NAME,
+            Key={"session_id": {"S": session_id}},
+            UpdateExpression='SET #attr = :val',
+            ConditionExpression='#attr = :zero',
+            ExpressionAttributeNames={'#attr': 'activated_at'},
+            ExpressionAttributeValues={
+                ':val': {'N': str(int(time.time()))},
+                ':zero': {'N': '0'}
+            }
+        )
     except ClientError as e:
-        return {"statusCode": 404, "body": json.dumps({"error": "Unknown sessionId"})}
+        return {"statusCode": 404, "body": AuthenticateResponse(auth=Auth(result=False,message='Unknown error'))}
 
     return {
         "statusCode": 200,
-        "body": f'<auth result="yes"><username>{username}</username></auth>',
+        "body": AuthenticateResponse(auth=Auth(result=True,username=username)),
     }
-
-# {"authToken": "AQICAHgWcKRWU0QpY9kF16VHC6Nzat7QlPiM_J63oaGox_djCwF4Zrj4Oqx8wyLV564_Lxh9AAAA_TCB-gYJKoZIhvcNAQcGoIHsMIHpAgEAMIHjBgkqhkiG9w0BBwEwHgYJYIZIAWUDBAEuMBEEDPaIIIPgfvyizxfqWwIBEICBtSn55Q_axO_qE_52oH36UGP4Tz8tQtEviaSjU-4tbSV8NyPGaXgyU66gN8oYBPjqNGRHfNd9je-KzU3P_lg6J-pi6rJAZDrdxNtTjczhBpNOZzHu7pd0ZKnt8WfRm1SeSSTsQoZsca4mFEMEgc4Y1SmSDgfL0JMxWEFNEVraBMr3G2vEo4pjfR0bRRhr7CbfIVRqirj4U_mZ09E8NAdSHor9HdNtM8I8Y15nv-TiVwPN14x9AJI=", "sessionId": "778df03a-309d-4c95-b353-20d9db0f94d5"}

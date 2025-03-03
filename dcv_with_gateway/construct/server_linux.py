@@ -6,8 +6,9 @@ from aws_cdk import (
     Duration,
     Tags,
 )
+from cdk_nag import NagSuppressions
 
-from nice_dcv_with_gateway.construct.server import Server
+from dcv_with_gateway.construct.server import Server
 
 
 class ServerLinux(Server):
@@ -65,3 +66,14 @@ class ServerLinux(Server):
         )
         Tags.of(self.asg).add("dcv:type", "server")
         Tags.of(self.asg).add("dcv:user", "dcv")
+
+        # CDK Nag suppressions
+        NagSuppressions.add_resource_suppressions(
+            self.asg,
+            [
+                {
+                    "id": "AwsSolutions-AS3",
+                    "reason": "Scaling notifications not required for this sample implementation"
+                }
+            ]
+        )

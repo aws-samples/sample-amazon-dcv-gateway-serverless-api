@@ -3,18 +3,18 @@ import os
 
 import aws_cdk as cdk
 from cdk_nag import AwsSolutionsChecks
-from nice_dcv_with_gateway.nice_dcv_with_gateway_stack import NiceDcvWithGatewayStack
+from dcv_with_gateway.dcv_with_gateway_stack import DcvWithGatewayStack
 
 
 app = cdk.App()
 account_id = app.node.get_context("account")
 region = app.node.get_context("region")
 
-# cdk.Aspects.of(app).add(AwsSolutionsChecks())
+cdk.Aspects.of(app).add(AwsSolutionsChecks())
 
-NiceDcvWithGatewayStack(
+DcvWithGatewayStack(
     app,
-    "NiceDcvWithGatewayStack",
+    "DcvWithGatewayStack",
     env=cdk.Environment(account=account_id, region=region),
     # If you don't specify 'env', this stack will be environment-agnostic.
     # Account/Region-dependent features and context lookups will not work,

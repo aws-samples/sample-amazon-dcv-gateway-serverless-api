@@ -8,6 +8,7 @@ from aws_cdk import (
     Duration, Tags, CfnOutput,
 )
 from constructs import Construct
+from cdk_nag import NagSuppressions
 
 
 class Gateway(Resource):
@@ -133,6 +134,37 @@ class Gateway(Resource):
         Tags.of(self.asg).add("dcv:type", "gateway")
 
         self.asg.attach_to_network_target_group(self.nlb_target_group)
+
+        # CDK supressions
+        NagSuppressions.add_resource_suppressions(
+            self.gateway_iam_role,
+            [
+                {
+                    "id": "AwsSolutions-IAM4",
+                    "reason": "SSM Managed Instance Core is required for EC2 instance management"
+                }
+            ]
+        )
+
+        NagSuppressions.add_resource_suppressions(
+            self.nlb,
+            [
+                {
+                    "id": "AwsSolutions-ELB2",
+                    "reason": "Access logs not required for samples environment"
+                }
+            ]
+        )
+
+        NagSuppressions.add_resource_suppressions(
+            self.asg,
+            [
+                {
+                    "id": "AwsSolutions-AS3",
+                    "reason": "Scaling notifications not required for this sample implementation"
+                }
+            ]
+        )
 
     def add_ingress_rule(
         self, peer: ec2.IPeer, port: ec2.Port, description: str = None

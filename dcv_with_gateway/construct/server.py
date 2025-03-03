@@ -5,7 +5,7 @@ from aws_cdk import (
     Stack,
 )
 from constructs import Construct
-
+from cdk_nag import NagSuppressions
 
 class Server(Resource):
 
@@ -64,4 +64,26 @@ class Server(Resource):
             ec2.Peer.security_group_id(gateway_security_group_id),
             ec2.Port.udp(8443),
             "Allow UDP traffic from Gateway",
+        )
+
+        # CDK Nag suppressions
+        NagSuppressions.add_resource_suppressions(
+            licence_access_policy,
+            [
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "CDK does not support this use case",
+                    "applies_to": f"Resource::arn:aws:s3:::dcv-license.{Stack.of(self).region}/*"
+                },
+            ]
+        )
+        NagSuppressions.add_resource_suppressions(
+            self.server_iam_role,
+            [
+                {
+                    "id": "AwsSolutions-IAM4",
+                    "reason": "SSM Managed Instance Core is required for EC2 instance management",
+                    "applies_to": "Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore"
+                },
+            ]
         )

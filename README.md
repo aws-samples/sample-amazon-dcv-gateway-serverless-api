@@ -1,18 +1,89 @@
-# AWS Samples - DCV gateway access management
+# NICE DCV with Gateway
 
-## Quick start
+A CDK-based solution for deploying Amazon DCV Gateway with auto-scaling capabilities and serverless API for instance resolution and traffic authorization.
 
-1. Create `cdk.context.json` file with following content:
-```
+![NICE DCV Gateway Architecture](media/diagram.drawio.png)
+
+## Overview
+
+This project implements:
+- Auto-scaling group for Amazon DCV Gateway
+- Serverless API for instance management
+- Session-based authorization system
+- DynamoDB-based session tracking
+
+## Prerequisites
+
+- AWS CDK installed
+- AWS CLI configured with appropriate credentials
+- Python3 installed
+
+## Installation
+
+1. Clone the repository
+2. Create a `cdk.context.json` file with the following configuration: 
+```json
 {
-  "allowed-ip-cidr": "yourIP",
-  "account": "account-id - required to search for AMIs",
-  "region": "region - required to search for AMIs"
+    "allowed-ip-cidr": "yourIP OR 0.0.0.0/0 for public access",
+    "account": "account-id - required to search for AMIs",
+    "region": "region - required to search for AMIs"
 }
-
 ```
-2. Run `cdk deploy` to deploy the stack
-3. Open EC2 console and copy instanceId of either windows or linux instance (check how instances are tagged with `dcv:` prefix) 
-4. Open API gateway console, select `DcvAccessManagementApi`
-5. Test `POST session` endpoint with following query string `instanceId={instanceId}`. It does create session valid for 1h. 
-6. Copy NLB DNS and craft url like this `https://{DNS}:8443?authToken={token}#{sessionId}`
+3. Install dependencies:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+```
+
+4. Deploy the stack:
+```bash
+cdk deploy
+```
+
+## Usage
+
+### Creating a New Session
+
+1. Locate your target instance ID from EC2 console (instances are tagged with `dcv:` prefix)
+2. Use the API Gateway endpoint:
+- API: DcvAccessManagementApi
+- Endpoint: POST /session
+- Query Parameter: instanceId={your-instance-id}
+3. Connecting to DCV
+Use the following URL format to connect:
+```
+https://{NLB_DNS}:8443?authToken={TOKEN}#{SESSION_ID}
+```
+Where:
+- NLB_DNS is your Network Load Balancer DNS name
+- TOKEN is the authentication token received from the API
+- SESSION_ID is your session identifier received from the API
+
+## Architecture
+- Auto Scaling Group : Manages DCV Gateway instances
+- API Gateway : Handles session management and authorization
+- DynamoDB : Stores session information
+- Lambda Functions : Process session requests and authorization
+
+
+## Security Considerations
+- Session tokens are valid for 1 hour
+- Access is restricted based on configured IP CIDR
+- Each session can only be activated once
+
+## Limitations
+This implementation is intended as a starting point and should be enhanced with:
+- Additional security measures
+- Proper access management
+- Production-grade monitoring and logging
+- narrowed-down access to KMS
+
+## Important Notes
+This repository should be used as a foundation for implementing proper access management and is not considered production-ready in its current state.
+
+## Contributing
+Contributions are welcome! Please feel free to submit pull requests.
+
+## License
+MIT-0

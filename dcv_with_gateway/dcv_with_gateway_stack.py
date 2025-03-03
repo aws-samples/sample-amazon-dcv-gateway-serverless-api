@@ -4,14 +4,14 @@ from aws_cdk import (
 )
 from constructs import Construct
 
-from nice_dcv_with_gateway.construct.access_management import AccessManagement
-from nice_dcv_with_gateway.construct.gateway import Gateway
-from nice_dcv_with_gateway.construct.server_linux import ServerLinux
-from nice_dcv_with_gateway.construct.server_windows import ServerWindows
-from nice_dcv_with_gateway.stacks.network_stack import NetworkStack
+from dcv_with_gateway.construct.access_management import AccessManagement
+from dcv_with_gateway.construct.gateway import Gateway
+from dcv_with_gateway.construct.server_linux import ServerLinux
+from dcv_with_gateway.construct.server_windows import ServerWindows
+from dcv_with_gateway.stacks.network_stack import NetworkStack
 
 
-class NiceDcvWithGatewayStack(Stack):
+class DcvWithGatewayStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)

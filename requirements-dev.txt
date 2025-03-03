@@ -1,4 +1,7 @@
-pytest==6.2.5
+pytest~=6.2
 black
 boto3
-cdk-nag~=2.29.19
+cdk-nag~=2.29
+bandit~=1.8
+pip-audit~=2.8
+semgrep~=1.110

@@ -102,27 +102,15 @@ bind-addr = "0.0.0.0"
 port = 8989
 
 [dcv]
-tls-strict = false # @TODO for prod use valid certificate
+# @TODO for production deployments use private certificate registry
+tls-strict = false
 
 [resolver]
 url = "$RESOLVER_URL"
 
 [web-resources]
 local-resources-path = "/usr/share/dcv/www"
-
-# @TODO https://docs.aws.amazon.com/dcv/latest/gw-admin/metrics.html
-# https://docs.aws.amazon.com/dcv/latest/gw-admin/metrics.html
-#[metrics-reporter-statsd]             # Enable Statsd metrics reporter (Optional)
-#endpoints = ["127.0.0.1"]
 EOL
-
-# Configure Gateway
-## Enables Web Access through the Gateway
-#sed -i --expression 's|url = "https://localhost:8080"|local-resources-path = "/usr/share/dcv/www"|' /etc/dcv-connection-gateway/dcv-connection-gateway.conf
-## Uncomment the line below to add your Session Resolver and replace the placeholder
-#sed -i --expression 's|url = "https://localhost:8081"|url = "{{ResolverUrl}}"|' /etc/dcv-connection-gateway/dcv-connection-gateway.conf
-## Uncomment the line below to enable health check
-
 
 # Enable and start Gateway
 systemctl enable dcv-connection-gateway

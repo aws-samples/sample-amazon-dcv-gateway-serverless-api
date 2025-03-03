@@ -2,14 +2,16 @@ from typing import List
 
 from aws_cdk import (
     Resource,
+    Stack,
     aws_ec2 as ec2,
     aws_lambda as lambda_,
     aws_apigateway as apigateway,
     aws_iam as iam,
     aws_kms as kms,
-    aws_dynamodb as dynamodb,
+    aws_dynamodb as dynamodb, RemovalPolicy,
 )
 from constructs import Construct
+from cdk_nag import NagSuppressions
 
 
 class AccessManagement(Resource):
@@ -28,16 +30,16 @@ class AccessManagement(Resource):
             self,
             "AuthKey",
             enable_key_rotation=True,
+            removal_policy=RemovalPolicy.DESTROY,
         )
-        auth_key.add_alias("alias/dcv-access-management")
         database = dynamodb.Table(
             self,
             "DcvAccessManagement",
-            table_name="dcv_access_management",
             partition_key=dynamodb.Attribute(
                 name="session_id", type=dynamodb.AttributeType.STRING
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY,
         )
 
         self.api = apigateway.RestApi(
@@ -151,6 +153,70 @@ class AccessManagement(Resource):
             "POST",
             apigateway.LambdaIntegration(create_session),
             authorization_type=apigateway.AuthorizationType.IAM,
+        )
+
+        # cdk supressions
+        NagSuppressions.add_resource_suppressions(
+            self.api,
+            [
+                {
+                    "id": "AwsSolutions-APIG2",
+                    "reason": "Request validation not required for this internal API"
+                },
+                {
+                    "id": "AwsSolutions-APIG1",
+                    "reason": "Access logging not required for sample environment"
+                },
+                {
+                    "id": "AwsSolutions-APIG3",
+                    "reason": "WAF not required for sample environment"
+                },
+                {
+                    "id": "AwsSolutions-APIG6",
+                    "reason": "CloudWatch logging not required for sample environment"
+                },
+                {
+                    "id": "AwsSolutions-APIG4",
+                    "reason": "Using IAM authorization instead of Cognito"
+                },
+                {
+                    "id": "AwsSolutions-COG4",
+                    "reason": "Using IAM authorization instead of Cognito user pools"
+                }
+            ],
+            apply_to_children=True
+        )
+
+        # For Lambda roles (Authenticator, Resolver, CreateSessionHandler)
+        NagSuppressions.add_resource_suppressions_by_path(
+            Stack.of(self),
+            [
+                f"/{Stack.of(self).stack_name}/AccessManagement/Authenticator/ServiceRole/Resource",
+                f"/{Stack.of(self).stack_name}/AccessManagement/Resolver/ServiceRole/Resource",
+                f"/{Stack.of(self).stack_name}/AccessManagement/CreateSessionHandler/ServiceRole/Resource"
+            ],
+            [
+                {
+                    "id": "AwsSolutions-IAM4",
+                    "reason": "Using AWS managed policies is acceptable for Lambda execution roles",
+                }
+            ]
+        )
+
+        # For IAM policies with wildcard permissions
+        NagSuppressions.add_resource_suppressions_by_path(
+            Stack.of(self),
+            [
+                f"/{Stack.of(self).stack_name}/AccessManagement/Authenticator/ServiceRole/DefaultPolicy/Resource",
+                f"/{Stack.of(self).stack_name}/AccessManagement/Resolver/ServiceRole/DefaultPolicy/Resource",
+                f"/{Stack.of(self).stack_name}/AccessManagement/CreateSessionHandler/ServiceRole/DefaultPolicy/Resource"
+            ],
+            [
+                {
+                    "id": "AwsSolutions-IAM5",
+                    "reason": "Lambda functions require specific permissions with wildcards for their operations"
+                }
+            ]
         )
 
     @property

@@ -3,6 +3,7 @@ from aws_cdk import (
     aws_ec2 as ec2,
 )
 from constructs import Construct
+from cdk_nag import NagSuppressions
 
 class NetworkStack(NestedStack):
 
@@ -50,3 +51,13 @@ class NetworkStack(NestedStack):
                 service.short_name, service=service
             )
             self.interface_endpoints[service.short_name] = endpoint
+
+        NagSuppressions.add_resource_suppressions(
+            self.vpc,
+            suppressions=[
+                {
+                    "id": "AwsSolutions-VPC7",
+                    "reason": "VPC Flow Logs are not implemented, code for demonstrating purposes only"
+                }
+            ]
+        )

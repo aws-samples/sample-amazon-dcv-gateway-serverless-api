@@ -56,7 +56,9 @@ def handler(event, context):
             "secret": {"S": secret},
             "instance_id": {"S": instance_id},
             "username": {"S": tags.get("dcv:user")},
-            "expire_at": {"N": str(int(time.time()) + 3600)},  # token is valid 1h
+            "created_at":{"N": str(int(time.time()))},
+            "expire_at": {"N": str(int(time.time()) + 3600)},
+            "activated_at": {"N": "0"}
         },
     )
 
