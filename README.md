@@ -1,6 +1,6 @@
 # NICE DCV with Gateway
 
-A CDK-based solution for deploying Amazon DCV Gateway with auto-scaling capabilities and serverless API for instance resolution and traffic authorization.
+A CDK-based solution for deploying Amazon DCV Gateway with auto-scaling capabilities and serverless API for instance resolution and sample traffic authorization.
 
 ![NICE DCV Gateway Architecture](media/diagram.drawio.png)
 
@@ -9,7 +9,7 @@ A CDK-based solution for deploying Amazon DCV Gateway with auto-scaling capabili
 This project implements:
 - Auto-scaling group for Amazon DCV Gateway
 - Serverless API for instance management
-- Session-based authorization system
+- Sample session-based authorization system for demonstrating purposes only
 - DynamoDB-based session tracking
 
 ## Prerequisites
@@ -71,6 +71,7 @@ Where:
 - Session tokens are valid for 1 hour
 - Access is restricted based on configured IP CIDR
 - Each session can only be activated once
+- Secret-based authorization is for demonstrating purposes only
 
 ## Limitations
 This implementation is intended as a starting point and should be enhanced with:
@@ -80,7 +81,7 @@ This implementation is intended as a starting point and should be enhanced with:
 - narrowed-down access to KMS
 
 ## Important Notes
-This repository should be used as a foundation for implementing proper access management and is not considered production-ready in its current state.
+This repository should be used only as a foundation for implementing proper access management and is not considered production-ready in its current state.
 
 ## Contributing
 Contributions are welcome! Please feel free to submit pull requests.
