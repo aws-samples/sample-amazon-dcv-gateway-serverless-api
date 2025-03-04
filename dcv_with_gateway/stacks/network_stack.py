@@ -1,9 +1,13 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 from aws_cdk import (
     NestedStack,
     aws_ec2 as ec2,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions
+
 
 class NetworkStack(NestedStack):
 
@@ -57,7 +61,7 @@ class NetworkStack(NestedStack):
             suppressions=[
                 {
                     "id": "AwsSolutions-VPC7",
-                    "reason": "VPC Flow Logs are not implemented, code for demonstrating purposes only"
+                    "reason": "VPC Flow Logs are not implemented, code for demonstrating purposes only",
                 }
-            ]
+            ],
         )

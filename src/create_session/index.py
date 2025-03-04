@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 import json
 import os
 import secrets
@@ -45,9 +48,10 @@ def handler(event, context):
     secret = str(secrets.token_urlsafe(64))
 
     auth_token_bytes = kms.encrypt(
-        KeyId=KMS_KEY, Plaintext=json.dumps({"session_id": session_id, "secret": secret})
+        KeyId=KMS_KEY,
+        Plaintext=json.dumps({"session_id": session_id, "secret": secret}),
     )["CiphertextBlob"]
-    auth_token=base64.urlsafe_b64encode(auth_token_bytes)
+    auth_token = base64.urlsafe_b64encode(auth_token_bytes)
 
     dynamodb.put_item(
         TableName=TABLE_NAME,
@@ -56,9 +60,9 @@ def handler(event, context):
             "secret": {"S": secret},
             "instance_id": {"S": instance_id},
             "username": {"S": tags.get("dcv:user")},
-            "created_at":{"N": str(int(time.time()))},
+            "created_at": {"N": str(int(time.time()))},
             "expire_at": {"N": str(int(time.time()) + 3600)},
-            "activated_at": {"N": "0"}
+            "activated_at": {"N": "0"},
         },
     )
 

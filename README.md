@@ -8,9 +8,9 @@ A CDK-based solution for deploying Amazon DCV Gateway with auto-scaling capabili
 
 This project implements:
 - Auto-scaling group for Amazon DCV Gateway
-- Serverless API for instance management
-- Sample session-based authorization system for demonstrating purposes only
-- DynamoDB-based session tracking
+- Serverless API for instance management (for demonstration purposes only)
+- Sample session-based authorization system (for demonstration purposes only)
+- DynamoDB-based session tracking (for demonstration purposes only)
 
 ## Prerequisites
 

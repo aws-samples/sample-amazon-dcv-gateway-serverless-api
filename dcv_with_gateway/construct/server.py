@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 from aws_cdk import (
     Resource,
     aws_ec2 as ec2,
@@ -6,6 +9,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions
+
 
 class Server(Resource):
 
@@ -73,9 +77,9 @@ class Server(Resource):
                 {
                     "id": "AwsSolutions-IAM5",
                     "reason": "CDK does not support this use case",
-                    "applies_to": f"Resource::arn:aws:s3:::dcv-license.{Stack.of(self).region}/*"
+                    "applies_to": f"Resource::arn:aws:s3:::dcv-license.{Stack.of(self).region}/*",
                 },
-            ]
+            ],
         )
         NagSuppressions.add_resource_suppressions(
             self.server_iam_role,
@@ -83,7 +87,7 @@ class Server(Resource):
                 {
                     "id": "AwsSolutions-IAM4",
                     "reason": "SSM Managed Instance Core is required for EC2 instance management",
-                    "applies_to": "Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore"
+                    "applies_to": "Policy::arn:<AWS::Partition>:iam::aws:policy/AmazonSSMManagedInstanceCore",
                 },
-            ]
+            ],
         )

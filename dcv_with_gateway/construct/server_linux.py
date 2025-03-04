@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 from string import Template
 
 from aws_cdk import (
@@ -73,7 +76,7 @@ class ServerLinux(Server):
             [
                 {
                     "id": "AwsSolutions-AS3",
-                    "reason": "Scaling notifications not required for this sample implementation"
+                    "reason": "Scaling notifications not required for this sample implementation",
                 }
-            ]
+            ],
         )

@@ -11,4 +11,5 @@ cdk.context.json
 .cdk.staging
 cdk.out
 dependency-check-report.html
+dependency-check-report.txt
 ash_output

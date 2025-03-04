@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 from string import Template
 from aws_cdk import (
     Resource,
@@ -5,7 +8,9 @@ from aws_cdk import (
     aws_elasticloadbalancingv2 as elbv2,
     aws_iam as iam,
     aws_autoscaling as autoscaling,
-    Duration, Tags, CfnOutput,
+    Duration,
+    Tags,
+    CfnOutput,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions
@@ -141,9 +146,9 @@ class Gateway(Resource):
             [
                 {
                     "id": "AwsSolutions-IAM4",
-                    "reason": "SSM Managed Instance Core is required for EC2 instance management"
+                    "reason": "SSM Managed Instance Core is required for EC2 instance management",
                 }
-            ]
+            ],
         )
 
         NagSuppressions.add_resource_suppressions(
@@ -151,9 +156,9 @@ class Gateway(Resource):
             [
                 {
                     "id": "AwsSolutions-ELB2",
-                    "reason": "Access logs not required for samples environment"
+                    "reason": "Access logs not required for samples environment",
                 }
-            ]
+            ],
         )
 
         NagSuppressions.add_resource_suppressions(
@@ -161,9 +166,9 @@ class Gateway(Resource):
             [
                 {
                     "id": "AwsSolutions-AS3",
-                    "reason": "Scaling notifications not required for this sample implementation"
+                    "reason": "Scaling notifications not required for this sample implementation",
                 }
-            ]
+            ],
         )
 
     def add_ingress_rule(

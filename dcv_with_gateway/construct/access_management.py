@@ -1,3 +1,6 @@
+# Copyright Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: MIT-0
+
 from typing import List
 
 from aws_cdk import (
@@ -8,7 +11,9 @@ from aws_cdk import (
     aws_apigateway as apigateway,
     aws_iam as iam,
     aws_kms as kms,
-    aws_dynamodb as dynamodb, RemovalPolicy,
+    BundlingOptions,
+    aws_dynamodb as dynamodb,
+    RemovalPolicy,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions
@@ -22,7 +27,7 @@ class AccessManagement(Resource):
         construct_id: str,
         vpc: ec2.IVpc,
         allowed_execute_api_vpc_endpoint_ids: List[str],
-        **kwargs
+        **kwargs,
     ) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
@@ -71,7 +76,17 @@ class AccessManagement(Resource):
             self,
             "Authenticator",
             handler="index.handler",
-            code=lambda_.Code.from_asset("src/authenticator"),
+            code=lambda_.Code.from_asset(
+                "src/authenticator",
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_13.bundling_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "pip install -r requirements.txt -t /asset-output && cp -au . /asset-output",
+                    ],
+                ),
+            ),
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
@@ -80,7 +95,7 @@ class AccessManagement(Resource):
                 "DCV_KMS_KEY": auth_key.key_id,
                 "DCV_TABLE_NAME": database.table_name,
             },
-            runtime=lambda_.Runtime.PYTHON_3_12,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             architecture=lambda_.Architecture.ARM_64,
             initial_policy=[
                 iam.PolicyStatement(
@@ -100,7 +115,17 @@ class AccessManagement(Resource):
             self,
             "Resolver",
             handler="index.handler",
-            code=lambda_.Code.from_asset("src/resolver"),
+            code=lambda_.Code.from_asset(
+                "src/resolver",
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_13.bundling_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "pip install --no-cache -r requirements.txt -t /asset-output && cp -au . /asset-output",
+                    ],
+                ),
+            ),
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
@@ -109,7 +134,7 @@ class AccessManagement(Resource):
                 "DCV_KMS_KEY": auth_key.key_id,
                 "DCV_TABLE_NAME": database.table_name,
             },
-            runtime=lambda_.Runtime.PYTHON_3_12,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             architecture=lambda_.Architecture.ARM_64,
             initial_policy=[
                 iam.PolicyStatement(
@@ -129,7 +154,17 @@ class AccessManagement(Resource):
             self,
             "CreateSessionHandler",
             handler="index.handler",
-            code=lambda_.Code.from_asset("src/create_session"),
+            code=lambda_.Code.from_asset(
+                "src/create_session",
+                bundling=BundlingOptions(
+                    image=lambda_.Runtime.PYTHON_3_13.bundling_image,
+                    command=[
+                        "bash",
+                        "-c",
+                        "pip install --no-cache -r requirements.txt -t /asset-output && cp -au . /asset-output",
+                    ],
+                ),
+            ),
             vpc=vpc,
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
@@ -138,7 +173,7 @@ class AccessManagement(Resource):
                 "DCV_KMS_KEY": auth_key.key_id,
                 "DCV_TABLE_NAME": database.table_name,
             },
-            runtime=lambda_.Runtime.PYTHON_3_12,
+            runtime=lambda_.Runtime.PYTHON_3_13,
             architecture=lambda_.Architecture.ARM_64,
             initial_policy=[
                 iam.PolicyStatement(
@@ -161,30 +196,30 @@ class AccessManagement(Resource):
             [
                 {
                     "id": "AwsSolutions-APIG2",
-                    "reason": "Request validation not required for this internal API"
+                    "reason": "Request validation not required for this internal API",
                 },
                 {
                     "id": "AwsSolutions-APIG1",
-                    "reason": "Access logging not required for sample environment"
+                    "reason": "Access logging not required for sample environment",
                 },
                 {
                     "id": "AwsSolutions-APIG3",
-                    "reason": "WAF not required for sample environment"
+                    "reason": "WAF not required for sample environment",
                 },
                 {
                     "id": "AwsSolutions-APIG6",
-                    "reason": "CloudWatch logging not required for sample environment"
+                    "reason": "CloudWatch logging not required for sample environment",
                 },
                 {
                     "id": "AwsSolutions-APIG4",
-                    "reason": "Using IAM authorization instead of Cognito"
+                    "reason": "Using IAM authorization instead of Cognito",
                 },
                 {
                     "id": "AwsSolutions-COG4",
-                    "reason": "Using IAM authorization instead of Cognito user pools"
-                }
+                    "reason": "Using IAM authorization instead of Cognito user pools",
+                },
             ],
-            apply_to_children=True
+            apply_to_children=True,
         )
 
         # For Lambda roles (Authenticator, Resolver, CreateSessionHandler)
@@ -193,14 +228,14 @@ class AccessManagement(Resource):
             [
                 f"/{Stack.of(self).stack_name}/AccessManagement/Authenticator/ServiceRole/Resource",
                 f"/{Stack.of(self).stack_name}/AccessManagement/Resolver/ServiceRole/Resource",
-                f"/{Stack.of(self).stack_name}/AccessManagement/CreateSessionHandler/ServiceRole/Resource"
+                f"/{Stack.of(self).stack_name}/AccessManagement/CreateSessionHandler/ServiceRole/Resource",
             ],
             [
                 {
                     "id": "AwsSolutions-IAM4",
                     "reason": "Using AWS managed policies is acceptable for Lambda execution roles",
                 }
-            ]
+            ],
         )
 
         # For IAM policies with wildcard permissions
@@ -209,14 +244,14 @@ class AccessManagement(Resource):
             [
                 f"/{Stack.of(self).stack_name}/AccessManagement/Authenticator/ServiceRole/DefaultPolicy/Resource",
                 f"/{Stack.of(self).stack_name}/AccessManagement/Resolver/ServiceRole/DefaultPolicy/Resource",
-                f"/{Stack.of(self).stack_name}/AccessManagement/CreateSessionHandler/ServiceRole/DefaultPolicy/Resource"
+                f"/{Stack.of(self).stack_name}/AccessManagement/CreateSessionHandler/ServiceRole/DefaultPolicy/Resource",
             ],
             [
                 {
                     "id": "AwsSolutions-IAM5",
-                    "reason": "Lambda functions require specific permissions with wildcards for their operations"
+                    "reason": "Lambda functions require specific permissions with wildcards for their operations",
                 }
-            ]
+            ],
         )
 
     @property

@@ -1,0 +1,2 @@
+xmltodict
+pydantic~=2.10
