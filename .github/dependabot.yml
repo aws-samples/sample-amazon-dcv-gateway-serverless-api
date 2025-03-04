@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: "pip"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore: dependabot[pip]"
+    labels:
+      - "auto-approve"
+      - "dependencies"
+      - "dependencies[pip]"
+    groups:
+      dev:
+        dependency-type: "development"
+      prod:
+        dependency-type: "production"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
