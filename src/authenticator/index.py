@@ -20,6 +20,7 @@ kms = boto3.client("kms")
 TABLE_NAME = os.environ.get("DCV_TABLE_NAME")
 KMS_KEY = os.environ.get("DCV_KMS_KEY")
 
+
 class Auth(BaseModel):
     class Config:
         populate_by_name = True
@@ -53,7 +54,7 @@ def handler(event, context):
 
     if authToken == None:
         return {
-            "statusCode": 200,
+            "statusCode": 400,
             "body": AuthenticateResponse(
                 auth=Auth(result="no", message="Invalid format")
             ).to_xml(),
@@ -67,14 +68,14 @@ def handler(event, context):
         token_payload = json.loads(token_string)
     except ClientError as e:
         return {
-            "statusCode": 200,
+            "statusCode": 400,
             "body": AuthenticateResponse(
                 auth=Auth(result="no", message="Invalid token format")
             ).to_xml(),
         }
     except Exception as e:
         return {
-            "statusCode": 200,
+            "statusCode": 400,
             "body": AuthenticateResponse(
                 auth=Auth(result="no", message="Invalid token format")
             ).to_xml(),
@@ -114,7 +115,7 @@ def handler(event, context):
 
         if source_ip != get_instance_ip(item["Item"]["instance_id"]["S"]):
             return {
-                "statusCode": 404,
+                "statusCode": 400,
                 "body": AuthenticateResponse(
                     auth=Auth(result="no", message="Unknown origin")
                 ).to_xml(),
@@ -143,7 +144,7 @@ def handler(event, context):
         )
     except ClientError as e:
         return {
-            "statusCode": 404,
+            "statusCode": 400,
             "body": AuthenticateResponse(
                 auth=Auth(result="no", message="Unknown error")
             ).to_xml(),
@@ -151,5 +152,7 @@ def handler(event, context):
 
     return {
         "statusCode": 200,
-        "body": AuthenticateResponse(auth=Auth(result="yes", username=username)).to_xml(),
+        "body": AuthenticateResponse(
+            auth=Auth(result="yes", username=username)
+        ).to_xml(),
     }

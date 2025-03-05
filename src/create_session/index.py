@@ -17,6 +17,7 @@ kms = boto3.client("kms")
 
 TABLE_NAME = os.environ.get("DCV_TABLE_NAME")
 KMS_KEY = os.environ.get("DCV_KMS_KEY")
+SESSION_LIFETIME = int(os.environ.get("SESSION_LIFETIME", 3600))
 
 
 def get_instance_tags(instance_id):
@@ -61,7 +62,7 @@ def handler(event, context):
             "instance_id": {"S": instance_id},
             "username": {"S": tags.get("dcv:user")},
             "created_at": {"N": str(int(time.time()))},
-            "expire_at": {"N": str(int(time.time()) + 3600)},
+            "expire_at": {"N": str(int(time.time()) + SESSION_LIFETIME)},
             "activated_at": {"N": "0"},
         },
     )

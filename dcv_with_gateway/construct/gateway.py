@@ -122,6 +122,7 @@ class Gateway(Resource):
             ),
             associate_public_ip_address=False,
             launch_template_name=f"{self.node.path}/gateway",
+            require_imdsv2=True,
         )
 
         self.asg = autoscaling.AutoScalingGroup(
@@ -131,8 +132,8 @@ class Gateway(Resource):
             vpc_subnets=ec2.SubnetSelection(
                 subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS
             ),
-            min_capacity=1,
-            max_capacity=2,
+            min_capacity=int(self.node.try_get_context("gateway:min-capacity") or 1),
+            max_capacity=int(self.node.try_get_context("gateway:max-capacity") or 2),
             launch_template=self.launch_template,
             health_check=autoscaling.HealthCheck.ec2(grace=Duration.minutes(1)),
         )

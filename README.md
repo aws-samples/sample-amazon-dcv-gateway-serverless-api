@@ -24,9 +24,12 @@ This project implements:
 2. Create a `cdk.context.json` file with the following configuration: 
 ```json
 {
-    "allowed-ip-cidr": "yourIP OR 0.0.0.0/0 for public access",
-    "account": "account-id - required to search for AMIs",
-    "region": "region - required to search for AMIs"
+  "account": "required: required to search for AMIs",
+  "region": "required: required to search for AMIs",
+  "gateway:allowed-ip-cidr": "required: allowlisted IP range or 0.0.0.0/0 for public access",
+  "gateway:session-lifetime": "optional, 3600 as default: by default session should be established in 1h or will expire",
+  "gateway:min-capacity": "optional, 1 as default: min number of EC2 instances in gateway fleet",
+  "gateway:max-capacity": "optional, 2 as default: max number of EC2 instances in gateway fleet"
 }
 ```
 3. Install dependencies:
@@ -34,6 +37,7 @@ This project implements:
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -r requirements.txt
+pip install -r requirements-dev.txt
 ```
 
 4. Deploy the stack:
@@ -68,10 +72,12 @@ Where:
 
 
 ## Security Considerations
-- Session tokens are valid for 1 hour
+- Session tokens are valid for 1 hour (configurable via CDK context)
 - Access is restricted based on configured IP CIDR
 - Each session can only be activated once
 - Secret-based authorization is for demonstrating purposes only
+- EC2 instances configuration serves only integration purposes and should be hardened
+- gateway and server instances should use private CA to ensure communication secured with private certificates
 
 ## Limitations
 This implementation is intended as a starting point and should be enhanced with:

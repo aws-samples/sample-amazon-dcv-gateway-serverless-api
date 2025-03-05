@@ -14,6 +14,7 @@ from aws_cdk import (
     BundlingOptions,
     aws_dynamodb as dynamodb,
     RemovalPolicy,
+    aws_logs as logs,
 )
 from constructs import Construct
 from cdk_nag import NagSuppressions
@@ -46,7 +47,9 @@ class AccessManagement(Resource):
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
             removal_policy=RemovalPolicy.DESTROY,
         )
-
+        api_logs = logs.LogGroup(
+            self, "DcvAccessManagementApiLogs", removal_policy=RemovalPolicy.DESTROY
+        )
         self.api = apigateway.RestApi(
             self,
             "DcvAccessManagementApi",
@@ -69,9 +72,13 @@ class AccessManagement(Resource):
                     )
                 ]
             ),
-            deploy_options=apigateway.StageOptions(stage_name="v1"),
+            deploy_options=apigateway.StageOptions(
+                stage_name="v1",
+                access_log_destination=apigateway.LogGroupLogDestination(api_logs),
+                data_trace_enabled=True,
+                logging_level=apigateway.MethodLoggingLevel.INFO,
+            ),
         )
-
         authenticator = lambda_.Function(
             self,
             "Authenticator",
@@ -172,6 +179,9 @@ class AccessManagement(Resource):
             environment={
                 "DCV_KMS_KEY": auth_key.key_id,
                 "DCV_TABLE_NAME": database.table_name,
+                "SESSION_LIFETIME": str(
+                    int(self.node.try_get_context("gateway:session-lifetime") or "3600")
+                ),
             },
             runtime=lambda_.Runtime.PYTHON_3_13,
             architecture=lambda_.Architecture.ARM_64,
@@ -205,10 +215,6 @@ class AccessManagement(Resource):
                 {
                     "id": "AwsSolutions-APIG3",
                     "reason": "WAF not required for sample environment",
-                },
-                {
-                    "id": "AwsSolutions-APIG6",
-                    "reason": "CloudWatch logging not required for sample environment",
                 },
                 {
                     "id": "AwsSolutions-APIG4",

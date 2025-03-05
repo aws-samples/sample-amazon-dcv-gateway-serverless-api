@@ -38,7 +38,7 @@ class DcvWithGatewayStack(Stack):
             vpc=network_stack.vpc,
             resolver_url=access_management.url,
         )
-        allowed_ip_cidr = self.node.try_get_context("allowed-ip-cidr")
+        allowed_ip_cidr = self.node.get_context("gateway:allowed-ip-cidr")
         if allowed_ip_cidr:
             gateway.add_ingress_rule(
                 peer=ec2.Peer.ipv4(allowed_ip_cidr),

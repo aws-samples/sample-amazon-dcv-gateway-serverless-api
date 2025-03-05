@@ -53,6 +53,7 @@ class ServerLinux(Server):
             ),
             associate_public_ip_address=False,
             launch_template_name=f"{self.node.path}/server",
+            require_imdsv2=True,
         )
 
         self.asg = autoscaling.AutoScalingGroup(
