@@ -5,7 +5,64 @@ updates:
     schedule:
       interval: "weekly"
     commit-message:
-      prefix: "chore: dependabot[pip]"
+      prefix: "chore: dependabot/core[pip]"
+    labels:
+      - "auto-approve"
+      - "dependencies"
+      - "dependencies[pip]"
+    groups:
+      dev:
+        dependency-type: "development"
+      prod:
+        dependency-type: "production"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "pip"
+    directory: "/src/authenticator"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore: dependabot/authenticator[pip]"
+    labels:
+      - "auto-approve"
+      - "dependencies"
+      - "dependencies[pip]"
+    groups:
+      dev:
+        dependency-type: "development"
+      prod:
+        dependency-type: "production"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "pip"
+    directory: "/src/create_session"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore: dependabot/create_session[pip]"
+    labels:
+      - "auto-approve"
+      - "dependencies"
+      - "dependencies[pip]"
+    groups:
+      dev:
+        dependency-type: "development"
+      prod:
+        dependency-type: "production"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: "pip"
+    directory: "/src/resolver"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "chore: dependabot/resolver[pip]"
     labels:
       - "auto-approve"
       - "dependencies"
