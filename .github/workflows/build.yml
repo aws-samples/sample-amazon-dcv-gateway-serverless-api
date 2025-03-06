@@ -25,8 +25,8 @@ jobs:
       - run: |
           cat > cdk.context.json << EOF
           {
-            "account":  "123456789012",
-            "region: ":  "us-east-1",
+            "account": "123456789012",
+            "region": "us-east-1",
             "gateway:allowed-ip-cidr": "10.0.0.0/8",
             "availability-zones:account=123456789012:region=us-east-1": [
               "us-east-1a",
