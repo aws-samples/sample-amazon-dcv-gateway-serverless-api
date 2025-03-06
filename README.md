@@ -70,6 +70,8 @@ Where:
 - DynamoDB : Stores session information
 - Lambda Functions : Process session requests and authorization
 
+## Security
+See [CONTRIBUTING](CONTRIBUTING.md#security-issue-notifications) for more information.
 
 ## Security Considerations
 - Session tokens are valid for 1 hour (configurable via CDK context)
