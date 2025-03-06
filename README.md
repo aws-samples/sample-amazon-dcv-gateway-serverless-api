@@ -1,8 +1,8 @@
-# NICE DCV with Gateway
+# Sample: Amazon DCV Gateway with serverless API 
 
-A CDK-based solution for deploying Amazon DCV Gateway with auto-scaling capabilities and serverless API for instance resolution and sample traffic authorization.
+A CDK-based sample for deploying Amazon DCV Gateway with auto-scaling capabilities and serverless API for instance resolution and sample traffic authorization.
 
-![NICE DCV Gateway Architecture](media/diagram.drawio.png)
+![Amazon DCV Gateway Architecture](media/diagram.drawio.png)
 
 ## Overview
 
