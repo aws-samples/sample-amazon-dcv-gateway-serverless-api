@@ -22,6 +22,24 @@ jobs:
         with:
           python-version: '3.13'
           cache: 'pip'
+      - run: |
+          cat > cdk.context.json << EOF
+          {
+            "account":  "123456789012",
+            "region: ":  "us-east-1",
+            "gateway:allowed-ip-cidr": "10.0.0.0/8",
+            "availability-zones:account=123456789012:region=us-east-1": [
+              "us-east-1a",
+              "us-east-1b",
+              "us-east-1c",
+              "us-east-1d",
+              "us-east-1e",
+              "us-east-1f"
+            ],
+            "ami:account=123456789012:filters.image-type.0=machine:filters.name.0=DCV-Windows-*:filters.platform.0=windows:filters.state.0=available:owners.0=amazon:region=us-east-1": "ami-123456789012",
+            "ami:account=123456789012:filters.image-type.0=machine:filters.name.0=DCV-AmazonLinux2-aarch64-*:filters.state.0=available:owners.0=amazon:region=us-east-1": "ami-123456789012"
+          }
+          EOF
       - run: pip install -r requirements.txt
       - run: pip install -r requirements-dev.txt
       - run: npm install -g aws-cdk@latest
